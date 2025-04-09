@@ -190,7 +190,7 @@ if arquivo:
                 # Custo PF
                 contabilidade_pf = 289.00
                 inss_pf = 166.98  # fixo
-                base_completa = receita_mensal - despesas_consultorio - despesas_pessoais - contabilidade_pf - inss_pf
+                base_completa = receita_mensal - despesas_consultorio - despesas_pessoais
                 base_completa = max(base_completa, 0)
                 ir_completa = 0
                 if base_completa <= 2259.20:
@@ -254,10 +254,16 @@ if arquivo:
                 irrf_prolabore = max(irrf_prolabore, 0)
 
                 # Restituição do IR do Pro Labore
-                if tipo_pf == "Completa":
-                    base_restituicao = base_ir_prolabore - despesas_pessoais
+                # Determinar dedução da PJ com base em despesas pessoais vs. teto simplificado
+                if despesas_pessoais > 1396.20:
+                    tipo_deducao_pj = "Completa"
                 else:
-                    base_restituicao = prolabore * 0.8
+                    tipo_deducao_pj = "Simplificada"
+
+                if tipo_deducao_pj == "Completa":
+                    base_restituicao = base_ir_prolabore - despesas_pessoais
+                #else:
+                 #   base_restituicao = prolabore * 0.8
 
                 if base_restituicao <= 2259.20:
                     ir_restituir = 0
@@ -273,8 +279,8 @@ if arquivo:
 
                 contabilidade_pj = 489.00
                 taxas_pj = 50.00
-                # custo_total_pj = simples_pj + inss_prolabore + irrf_prolabore + contabilidade_pj + taxas_pj - ir_restituir
-                custo_total_pj = simples_pj + inss_prolabore + irrf_prolabore + contabilidade_pj + taxas_pj
+                custo_total_pj = simples_pj + inss_prolabore + irrf_prolabore + contabilidade_pj + taxas_pj - ir_restituir
+                # custo_total_pj = simples_pj + inss_prolabore + irrf_prolabore + contabilidade_pj + taxas_pj
 
                 st.markdown("## 💰 Resultado da Simulação")
                 col_pf, col_pj = st.columns(2)
