@@ -6,6 +6,10 @@ import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 from PIL import Image
 import os
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image as RLImage
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet
+from io import BytesIO
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
 # === IDENTIDADE VISUAL ===
@@ -64,7 +68,8 @@ if arquivo:
         with pdfplumber.open(arquivo) as pdf:
             texto = pdf.pages[0].extract_text()
 
-        dados_extraidos = {"nome": None, "cpf": None, "rendimentos_total": [], "deducao_considerada": [], "imposto_devido_I": []}
+        dados_extraidos = {"nome": None, "cpf": None, "rendimentos_total": [], "deducao_considerada": [],
+                           "imposto_devido_I": []}
 
         nome_match = re.search(r"NOME:\s+(.*?)\s+DEMONSTRATIVO", texto)
         cpf_match = re.search(r"CPF:\s+([\d\.]+-\d+)", texto)
@@ -75,11 +80,14 @@ if arquivo:
         if nome_match: dados_extraidos["nome"] = nome_match.group(1)
         if cpf_match: dados_extraidos["cpf"] = cpf_match.group(1)
         if rendimentos_match:
-            dados_extraidos["rendimentos_total"] = [val.replace(".", "").replace(",", ".") for val in rendimentos_match.group(1).split()]
+            dados_extraidos["rendimentos_total"] = [val.replace(".", "").replace(",", ".") for val in
+                                                    rendimentos_match.group(1).split()]
         if deducao_match:
-            dados_extraidos["deducao_considerada"] = [val.replace(".", "").replace(",", ".") for val in deducao_match.group(1).split()]
+            dados_extraidos["deducao_considerada"] = [val.replace(".", "").replace(",", ".") for val in
+                                                      deducao_match.group(1).split()]
         if imposto_match:
-            dados_extraidos["imposto_devido_I"] = [val.replace(".", "").replace(",", ".") for val in imposto_match.group(1).split()]
+            dados_extraidos["imposto_devido_I"] = [val.replace(".", "").replace(",", ".") for val in
+                                                   imposto_match.group(1).split()]
 
         dados_mensais = {}
         for i in range(12):
@@ -95,7 +103,8 @@ if arquivo:
                 "aliquota": aliquota
             }
 
-        st.markdown(f"<h3 style='color:{COR_PRIMARIA}; margin-bottom:0.5em;'>🗓️ Selecione os meses</h3>", unsafe_allow_html=True)
+        st.markdown(f"<h3 style='color:{COR_PRIMARIA}; margin-bottom:0.5em;'>🗓️ Selecione os meses</h3>",
+                    unsafe_allow_html=True)
         meses_selecionados = st.multiselect("Meses:", meses, default=meses)
 
         st.markdown("<div class='spacer-below-filter'></div>", unsafe_allow_html=True)
@@ -118,7 +127,6 @@ if arquivo:
         valor_aliquota_media = f"{np.mean(aliquotas):.2f}".replace(".", ",") + "%"
         col_c.metric("Alíquota Média", valor_aliquota_media)
 
-
         col1, col2 = st.columns(2)
         with col1:
             st.markdown(f"<h4 style='color:{COR_PRIMARIA}'>📊 Comparativo de Valores</h4>", unsafe_allow_html=True)
@@ -133,6 +141,7 @@ if arquivo:
             ax.set_ylabel("R$")
             ax.legend()
             st.pyplot(fig_valores)
+            fig_valores.savefig("grafico_valores.png", dpi=300, bbox_inches='tight')
 
         with col2:
             st.markdown(f"<h4 style='color:{COR_PRIMARIA}'>📈 Evolução da Alíquota</h4>", unsafe_allow_html=True)
@@ -142,6 +151,7 @@ if arquivo:
             ax2.set_ylabel("%")
             ax2.grid(True)
             st.pyplot(fig_aliquota)
+            fig_aliquota.savefig("grafico_aliquota.png", dpi=300, bbox_inches='tight')
 
         st.markdown(f"<h4 style='color:{COR_PRIMARIA}'>🚦 Alíquota Efetiva Média</h4>", unsafe_allow_html=True)
         media_aliquota = round(np.mean(aliquotas), 2)
@@ -168,6 +178,7 @@ if arquivo:
             }
         ))
         fig_gauge.update_layout(height=300, paper_bgcolor='white')
+        fig_gauge.write_image("grafico_velocimetro.png")  # salva o gráfico para o PDF
         st.plotly_chart(fig_gauge)
 
         # === Planejamento Tributário ===
@@ -279,16 +290,21 @@ if arquivo:
 
                 contabilidade_pj = 489.00
                 taxas_pj = 50.00
-                custo_total_pj = simples_pj + inss_prolabore + irrf_prolabore + contabilidade_pj + taxas_pj - (irrf_prolabore - ir_restituir)
+                custo_total_pj = simples_pj + inss_prolabore + irrf_prolabore + contabilidade_pj + taxas_pj - (
+                            irrf_prolabore - ir_restituir)
 
                 st.markdown("## 💰 Resultado da Simulação")
                 col_pf, col_pj = st.columns(2)
                 with col_pf:
-                    st.metric("Custo Anual PF", f"R$ {custo_total_pf * 12:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'))
-                    st.caption(f"Custo mensal: R$ {custo_total_pf:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'))
+                    st.metric("Custo Anual PF",
+                              f"R$ {custo_total_pf * 12:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'))
+                    st.caption(
+                        f"Custo mensal: R$ {custo_total_pf:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'))
                 with col_pj:
-                    st.metric("Custo Anual PJ", f"R$ {custo_total_pj * 12:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'))
-                    st.caption(f"Custo mensal: R$ {custo_total_pj:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'))
+                    st.metric("Custo Anual PJ",
+                              f"R$ {custo_total_pj * 12:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'))
+                    st.caption(
+                        f"Custo mensal: R$ {custo_total_pj:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'))
 
                 economia = (custo_total_pf - custo_total_pj) * 12
                 if economia > 0:
@@ -297,11 +313,12 @@ if arquivo:
                     st.info(f"🤔 No cenário atual, PF ainda é mais vantajoso em cerca de R$ {abs(economia):,.2f} ao ano")
 
                 st.markdown("### 📊 Comparativo Visual")
-                fig_comp = plt.figure(figsize=(6,3))
+                fig_comp = plt.figure(figsize=(6, 3))
                 plt.bar(["PF"], [custo_total_pf * 12], color=COR_PRIMARIA)
                 plt.bar(["PJ"], [custo_total_pj * 12], color=COR_SECUNDARIA)
                 plt.ylabel("Custo Anual (R$)")
                 st.pyplot(fig_comp)
+                fig_comp.savefig("grafico_pf_vs_pj.png", dpi=300, bbox_inches='tight')
 
                 # Debug: Exibir variáveis e fórmulas
                 # st.markdown("### 🧾 Variáveis e Fórmulas utilizadas")
@@ -325,7 +342,80 @@ if arquivo:
                 st.markdown(f"**Restituição IR pró-labore:** R$ {ir_restituir:.2f}")
                 st.markdown(f"**Total PJ:** R$ {custo_total_pj:.2f}")
 
+                buffer = BytesIO()
+                doc = SimpleDocTemplate(buffer, pagesize=A4)
+                styles = getSampleStyleSheet()
+                story = []
 
+                # Logo
+                try:
+                    story.append(RLImage("logo.png", width=120))  # Removido height para evitar achatamento
+                except:
+                    pass
+                story.append(Spacer(1, 12))
+
+                # Título e nome
+                story.append(Paragraph(f"Relatório Tributário - Carnê-Leão", styles['Title']))
+                story.append(Paragraph(f"Psicóloga: <b>{dados_extraidos['nome']}</b>", styles['Normal']))
+                story.append(Spacer(1, 12))
+
+                # Resumo
+                story.append(Paragraph("📋 <b>Resumo Financeiro</b>", styles['Heading2']))
+                story.append(Paragraph(f"Total Recebido: {valor_total_recebido}", styles['Normal']))
+                story.append(Paragraph(f"Total de Impostos: {valor_total_impostos}", styles['Normal']))
+                story.append(Paragraph(f"Alíquota Efetiva Média: {valor_aliquota_media}", styles['Normal']))
+                story.append(Spacer(1, 12))
+
+                # Gráficos
+                story.append(Paragraph("📊 Comparativo de Valores", styles['Heading2']))
+                story.append(RLImage("grafico_valores.png", width=400, height=200))
+                story.append(Spacer(1, 12))
+
+                from reportlab.platypus import KeepTogether
+
+                story.append(KeepTogether([
+                    Paragraph("📈 Evolução da Alíquota Efetiva", styles['Heading2']),
+                    RLImage("grafico_aliquota.png", width=400, height=200)
+                ]))
+
+                story.append(Spacer(1, 12))
+
+                # Comparativo PF x PJ (opcional)
+                if os.path.exists("grafico_pf_vs_pj.png"):
+                    story.append(Paragraph("💰 Comparativo PF vs PJ", styles['Heading2']))
+                    story.append(RLImage("grafico_pf_vs_pj.png", width=400, height=200))
+                    story.append(Spacer(1, 6))
+                    story.append(Paragraph(f"Custo Anual PF: R$ {custo_total_pf * 12:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),styles['Normal']))
+                    story.append(Paragraph(f"Custo Anual PJ: R$ {custo_total_pj * 12:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),styles['Normal']))
+                    story.append(Paragraph(f"Custo Mensal PF: R$ {custo_total_pf:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),styles['Normal']))
+                    story.append(Paragraph(f"Custo Mensal PJ: R$ {custo_total_pj:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),styles['Normal']))
+                    story.append(Spacer(1, 12))
+
+                    # Finalização
+                    story.append(Paragraph("📉 Alíquota Efetiva Média", styles['Heading2']))
+                    story.append(RLImage("grafico_velocimetro.png", width=400, height=200))
+                    story.append(Spacer(1, 12))
+                    if custo_total_pf < custo_total_pj:
+                        destaque = "✅ Modelo mais vantajoso: Pessoa Física (PF)"
+                    elif custo_total_pj < custo_total_pf:
+                        destaque = "✅ Modelo mais vantajoso: Pessoa Jurídica (PJ)"
+                    else:
+                        destaque = "Ambos os modelos possuem o mesmo custo tributário."
+                    story.append(Paragraph(destaque, styles['Heading2']))
+
+                    story.append(Paragraph("<i>Relatório gerado automaticamente pelo app Carnê-Leão - Declara Psi</i>", styles['Normal']))
+
+                    # Geração
+                    doc.build(story)
+                    pdf_bytes = buffer.getvalue()
+                    buffer.close()
+
+                    st.download_button(
+                    label="📥 Baixar Relatório em PDF",
+                    data=pdf_bytes,
+                    file_name="relatorio_carne_leao.pdf",
+                    mime="application/pdf"
+                )
 
     except Exception as e:
         st.error(f"Erro ao processar o PDF: {e}")

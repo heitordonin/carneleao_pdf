@@ -3,3 +3,6 @@ pdfplumber
 matplotlib
 plotly
 pillow
+reportlab
+fpdf
+kaleido
