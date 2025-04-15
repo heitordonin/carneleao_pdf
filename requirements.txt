@@ -6,3 +6,4 @@ pillow
 reportlab
 fpdf
 kaleido
+pillow

@@ -48,8 +48,8 @@ with col_logo:
 with col_titulo:
     st.markdown(f"""
         <div style='padding-top:10px'>
-        <h1 style='color:{COR_PRIMARIA}; margin-bottom:0;'>Dashboard Carnê-Leão</h1>
-        <p style='color:{COR_SECUNDARIA}; font-size:18px; margin-top:0;'>Análise tributária com alíquota efetiva</p>
+        <h1 style='color:#ffffff; margin-bottom:0;'>Dashboard Carnê-Leão</h1>
+        <p style='color:#ffffff; font-size:18px; margin-top:0;'>Análise tributária com alíquota efetiva</p>
         </div>
     """, unsafe_allow_html=True)
 
